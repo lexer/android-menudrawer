@@ -346,10 +346,16 @@ public abstract class DraggableDrawer extends MenuDrawer {
     protected void updateTouchAreaSize() {
         if (mTouchMode == TOUCH_MODE_BEZEL) {
             mTouchSize = mTouchBezelSize;
-        } else if (mTouchMode == TOUCH_MODE_FULLSCREEN) {
+        } else if (mTouchMode == TOUCH_MODE_FULLSCREEN || mTouchMode == TOUCH_MODE_ACTIONBAR) {
             mTouchSize = getMeasuredWidth();
         } else {
             mTouchSize = 0;
+        }
+
+        if (mTouchMode == TOUCH_MODE_ACTIONBAR) {
+            mTouchHeight = getActionBarHeight();
+        } else {
+            mTouchHeight = getMeasuredHeight();
         }
     }
 

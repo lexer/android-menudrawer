@@ -25,6 +25,7 @@ public class SamplesActivity extends ListActivity {
         mAdapter.addSample("ListActivity sample", "Shows how to use the drawer with a ListActivity.",
                 ListActivitySample.class);
         mAdapter.addSample("Window sample", "The entire window is dragged.", WindowSample.class);
+        mAdapter.addSample("Draggable actionbar sample", "Only the actionbar area is dragged.", DraggableActionbarSample.class);
         mAdapter.addSample("ActionBar overlay sample", "A window sample, where the ActionBar is an overlay",
                 ActionBarOverlaySample.class);
         mAdapter.addSample("Right menu", "The menu is positioned to the right of the content", RightMenuSample.class);

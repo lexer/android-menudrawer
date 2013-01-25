@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 
 public class LeftDrawer extends HorizontalDrawer {
@@ -163,13 +164,13 @@ public class LeftDrawer extends HorizontalDrawer {
 
     @Override
     protected boolean onDownAllowDrag(MotionEvent ev) {
-        return (!mMenuVisible && mInitialMotionX <= mTouchSize)
+        return (!mMenuVisible && mInitialMotionX <= mTouchSize && mInitialMotionY <= mTouchHeight)
                 || (mMenuVisible && mInitialMotionX >= mOffsetPixels);
     }
 
     @Override
     protected boolean onMoveAllowDrag(MotionEvent ev, float diff) {
-        return (!mMenuVisible && mInitialMotionX <= mTouchSize && (diff > 0))
+        return (!mMenuVisible && mInitialMotionX <= mTouchSize && (diff > 0) && mInitialMotionY <= mTouchHeight)
                 || (mMenuVisible && mInitialMotionX >= mOffsetPixels);
     }
 

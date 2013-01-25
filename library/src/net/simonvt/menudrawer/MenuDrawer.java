@@ -17,6 +17,9 @@ import android.view.ViewGroup;
 
 public abstract class MenuDrawer extends ViewGroup {
 
+    public static final int ACTIONBAR_HEIGHT = 48;
+    public static final int STATUSBAR_HEIGHT = 25;
+
     /**
      * Callback interface for changing state of the drawer.
      */
@@ -75,6 +78,11 @@ public abstract class MenuDrawer extends ViewGroup {
      * Allow opening drawer by dragging anywhere on the screen.
      */
     public static final int TOUCH_MODE_FULLSCREEN = 2;
+
+    /**
+     * Allow opening drawer by dragging  anywhere on the actionbar.
+     */
+    public static final int TOUCH_MODE_ACTIONBAR = 3;
 
     /**
      * Indicates that the drawer is currently closed.
@@ -204,6 +212,13 @@ public abstract class MenuDrawer extends ViewGroup {
      */
     protected int mTouchSize;
 
+
+    /**
+     * The touch height size of the drawer in px.
+     */
+    protected float mTouchHeight;
+
+
     /**
      * Listener used to dispatch state change events.
      */
@@ -211,7 +226,7 @@ public abstract class MenuDrawer extends ViewGroup {
 
     /**
      * Touch mode for the Drawer.
-     * Possible values are {@link #TOUCH_MODE_NONE}, {@link #TOUCH_MODE_BEZEL} or {@link #TOUCH_MODE_FULLSCREEN}
+     * Possible values are {@link #TOUCH_MODE_NONE}, {@link #TOUCH_MODE_BEZEL} or {@link #TOUCH_MODE_FULLSCREEN} or {@link #TOUCH_MODE_ACTIONBAR}
      * Default: {@link #TOUCH_MODE_BEZEL}
      */
     protected int mTouchMode = TOUCH_MODE_BEZEL;
@@ -792,7 +807,7 @@ public abstract class MenuDrawer extends ViewGroup {
 
     /**
      * Sets the drawer touch mode. Possible values are {@link #TOUCH_MODE_NONE}, {@link #TOUCH_MODE_BEZEL} or
-     * {@link #TOUCH_MODE_FULLSCREEN}.
+     * {@link #TOUCH_MODE_FULLSCREEN} or {@link #TOUCH_MODE_ACTIONBAR}.
      *
      * @param mode The touch mode.
      */
@@ -809,6 +824,10 @@ public abstract class MenuDrawer extends ViewGroup {
      * Returns the size of the touch bezel in px.
      */
     public abstract int getTouchBezelSize();
+
+    protected int getActionBarHeight() {
+        return dpToPx(ACTIONBAR_HEIGHT + STATUSBAR_HEIGHT); // actionbar 48dp + status bar 25dp
+    }
 
     @Override
     protected boolean fitSystemWindows(Rect insets) {

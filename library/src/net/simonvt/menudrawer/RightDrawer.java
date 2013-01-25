@@ -180,7 +180,7 @@ public class RightDrawer extends HorizontalDrawer {
         final int width = getWidth();
         final int initialMotionX = (int) mInitialMotionX;
 
-        return (!mMenuVisible && initialMotionX >= width - mTouchSize)
+        return (!mMenuVisible && initialMotionX >= width - mTouchSize && mInitialMotionY <= mTouchHeight)
                 || (mMenuVisible && initialMotionX <= width + mOffsetPixels);
     }
 
@@ -189,7 +189,7 @@ public class RightDrawer extends HorizontalDrawer {
         final int width = getWidth();
         final int initialMotionX = (int) mInitialMotionX;
 
-        return (!mMenuVisible && initialMotionX >= width - mTouchSize && (diff < 0))
+        return (!mMenuVisible && initialMotionX >= width - mTouchSize && (diff < 0) && mInitialMotionY <= mTouchHeight)
                 || (mMenuVisible && initialMotionX <= width + mOffsetPixels);
     }
 
