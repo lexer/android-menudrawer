@@ -267,6 +267,15 @@ public abstract class StaticDrawer extends MenuDrawer {
     }
 
     @Override
+    public void setActionBarSize(int size) {
+    }
+
+    @Override
+    public int getActionBarSize() {
+        return 0;
+    }
+
+    @Override
     public Parcelable saveState() {
         return null;
     }

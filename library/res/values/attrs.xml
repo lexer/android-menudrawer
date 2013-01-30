@@ -33,6 +33,9 @@
         <!-- The touch bezel size. -->
         <attr name="mdTouchBezelSize" format="dimension" />
 
+        <!-- The actionbar size. -->
+        <attr name="mdActionBarSize" format="dimension" />
+
     </declare-styleable>
 
 </resources>

@@ -17,9 +17,6 @@ import android.view.ViewGroup;
 
 public abstract class MenuDrawer extends ViewGroup {
 
-    public static final int ACTIONBAR_HEIGHT = 48;
-    public static final int STATUSBAR_HEIGHT = 25;
-
     /**
      * Callback interface for changing state of the drawer.
      */
@@ -48,6 +45,11 @@ public abstract class MenuDrawer extends ViewGroup {
      * The default touch bezel size of the drawer in dp.
      */
     private static final int DEFAULT_DRAG_BEZEL_DP = 24;
+
+    /**
+     * The default touch bezel size of the drawer in dp.
+     */
+    private static final int DEFAULT_ACTIONBAR_HEIGHT_DP = 48;
 
     /**
      * The default drop shadow size in dp.
@@ -186,6 +188,12 @@ public abstract class MenuDrawer extends ViewGroup {
      */
     protected boolean mMenuVisible;
 
+
+    /**
+     * Status bar height in px.
+     */
+    private int statusBarHeight;
+
     /**
      * The drag mode of the drawer. Can be either {@link #MENU_DRAG_CONTENT} or {@link #MENU_DRAG_WINDOW}.
      */
@@ -201,6 +209,11 @@ public abstract class MenuDrawer extends ViewGroup {
      * @see #STATE_OPEN
      */
     protected int mDrawerState = STATE_CLOSED;
+
+    /**
+     * The size of actionbar in px.
+     */
+    protected int mActionBarSize;
 
     /**
      * The touch bezel size of the drawer in px.
@@ -430,6 +443,9 @@ public abstract class MenuDrawer extends ViewGroup {
 
         mTouchBezelSize = a.getDimensionPixelSize(R.styleable.MenuDrawer_mdTouchBezelSize,
                 dpToPx(DEFAULT_DRAG_BEZEL_DP));
+
+        mActionBarSize = a.getDimensionPixelSize(R.styleable.MenuDrawer_mdActionBarSize,
+                dpToPx(DEFAULT_ACTIONBAR_HEIGHT_DP));
 
         a.recycle();
 
@@ -825,13 +841,31 @@ public abstract class MenuDrawer extends ViewGroup {
      */
     public abstract int getTouchBezelSize();
 
-    protected int getActionBarHeight() {
-        return dpToPx(ACTIONBAR_HEIGHT + STATUSBAR_HEIGHT); // actionbar 48dp + status bar 25dp
+    /**
+     * Sets the size of ActionBar.
+     *
+     * @param size ActionBar size in px.
+     */
+    public abstract void setActionBarSize(int size);
+
+    /**
+     * Returns the size of the ActionBar in px.
+     */
+    public abstract int getActionBarSize();
+
+
+    /**
+     * Returns the size of the actionbar + statusbar in px.
+     */
+    protected int getActionBarWithStatusBarHeight() {
+        Log.d(TAG, "actionbar+statusbar" + (mActionBarSize + statusBarHeight));
+        return mActionBarSize + statusBarHeight;
     }
 
     @Override
     protected boolean fitSystemWindows(Rect insets) {
         if (mDragMode == MENU_DRAG_WINDOW) {
+            statusBarHeight = insets.top;
             mMenuContainer.setPadding(0, insets.top, 0, 0);
         }
         return super.fitSystemWindows(insets);

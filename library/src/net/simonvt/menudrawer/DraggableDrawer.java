@@ -293,6 +293,16 @@ public abstract class DraggableDrawer extends MenuDrawer {
         return mTouchBezelSize;
     }
 
+    @Override
+    public void setActionBarSize(int size) {
+        mActionBarSize = size;
+    }
+
+    @Override
+    public int getActionBarSize() {
+        return mActionBarSize;
+    }
+
     /**
      * Sets the number of pixels the content should be offset.
      *
@@ -353,7 +363,7 @@ public abstract class DraggableDrawer extends MenuDrawer {
         }
 
         if (mTouchMode == TOUCH_MODE_ACTIONBAR) {
-            mTouchHeight = getActionBarHeight();
+            mTouchHeight = getActionBarWithStatusBarHeight();
         } else {
             mTouchHeight = getMeasuredHeight();
         }
