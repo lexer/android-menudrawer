@@ -8,12 +8,15 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
 
 public abstract class MenuDrawer extends ViewGroup {
 
@@ -40,6 +43,11 @@ public abstract class MenuDrawer extends ViewGroup {
      * Indicates whether debug code should be enabled.
      */
     private static final boolean DEBUG = false;
+
+    /**
+     * The time between each frame when animating the drawer.
+     */
+    protected static final int ANIMATION_DELAY = 1000 / 60;
 
     /**
      * The default touch bezel size of the drawer in dp.
@@ -115,6 +123,16 @@ public abstract class MenuDrawer extends ViewGroup {
      * Indicates whether to use {@link View#setTranslationX(float)} when positioning views.
      */
     static final boolean USE_TRANSLATIONS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1;
+
+    /**
+     * Time to animate the indicator to the new active view.
+     */
+    static final int INDICATOR_ANIM_DURATION = 800;
+
+    /**
+     * Interpolator used when animating the drawer open/closed.
+     */
+    protected static final Interpolator SMOOTH_INTERPOLATOR = new SmoothInterpolator();
 
     /**
      * Drawable used as menu overlay.
@@ -253,6 +271,41 @@ public abstract class MenuDrawer extends ViewGroup {
      * The Activity the drawer is attached to.
      */
     private Activity mActivity;
+
+    /**
+     * Scroller used when animating the indicator to a new position.
+     */
+    private FloatScroller mIndicatorScroller;
+
+    /**
+     * Runnable used when animating the indicator to a new position.
+     */
+    private Runnable mIndicatorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            animateIndicatorInvalidate();
+        }
+    };
+
+    /**
+     * The start position of the indicator when animating it to a new position.
+     */
+    protected int mIndicatorStartPos;
+
+    /**
+     * [0..1] value indicating the current progress of the animation.
+     */
+    protected float mIndicatorOffset;
+
+    /**
+     * Whether the indicator is currently animating.
+     */
+    protected boolean mIndicatorAnimating;
+
+    /**
+     * Bundle used to hold the drawers state.
+     */
+    protected Bundle mState;
 
     /**
      * Attaches the MenuDrawer to the Activity.
@@ -452,30 +505,33 @@ public abstract class MenuDrawer extends ViewGroup {
         mMenuContainer = new BuildLayerFrameLayout(context);
         mMenuContainer.setId(R.id.md__menu);
         mMenuContainer.setBackgroundDrawable(menuBackground);
-        addView(mMenuContainer);
+        super.addView(mMenuContainer, -1, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
         mContentContainer = new NoClickThroughFrameLayout(context);
         mContentContainer.setId(R.id.md__content);
         mContentContainer.setBackgroundDrawable(contentBackground);
-        addView(mContentContainer);
+        super.addView(mContentContainer, -1, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
         mMenuOverlay = new ColorDrawable(0xFF000000);
+
+        mIndicatorScroller = new FloatScroller(SMOOTH_INTERPOLATOR);
     }
 
     @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-        View mv = findViewById(R.id.mdMenu);
-        if (mv != null) {
-            removeView(mv);
-            mMenuContainer.addView(mv);
+    public void addView(View child, int index, LayoutParams params) {
+        int childCount = mMenuContainer.getChildCount();
+        if (childCount == 0) {
+            mMenuContainer.addView(child, index, params);
+            return;
         }
 
-        View cv = findViewById(R.id.mdContent);
-        if (cv != null) {
-            removeView(cv);
-            mContentContainer.addView(cv);
+        childCount = mContentContainer.getChildCount();
+        if (childCount == 0) {
+            mContentContainer.addView(child, index, params);
+            return;
         }
+
+        throw new IllegalStateException("MenuDrawer can only hold two child views");
     }
 
     protected int dpToPx(int dp) {
@@ -557,8 +613,59 @@ public abstract class MenuDrawer extends ViewGroup {
      *                 must be called first.
      */
     public void setActiveView(View v, int position) {
+        final View oldView = mActiveView;
         mActiveView = v;
         mActivePosition = position;
+
+        if (oldView != null) {
+            startAnimatingIndicator();
+        }
+
+        invalidate();
+    }
+
+    /**
+     * Starts animating the indicator to a new position.
+     */
+    private void startAnimatingIndicator() {
+        mIndicatorStartPos = getIndicatorStartPos();
+        mIndicatorAnimating = true;
+        mIndicatorScroller.startScroll(0.0f, 1.0f, INDICATOR_ANIM_DURATION);
+
+        animateIndicatorInvalidate();
+    }
+
+    /**
+     * Returns the start position of the indicator.
+     *
+     * @return The start position of the indicator.
+     */
+    protected abstract int getIndicatorStartPos();
+
+    /**
+     * Callback when each frame in the indicator animation should be drawn.
+     */
+    private void animateIndicatorInvalidate() {
+        if (mIndicatorScroller.computeScrollOffset()) {
+            mIndicatorOffset = mIndicatorScroller.getCurr();
+            Log.d(TAG, "New offset: " + mIndicatorOffset);
+            invalidate();
+
+            if (!mIndicatorScroller.isFinished()) {
+                postOnAnimation(mIndicatorRunnable);
+                return;
+            }
+        }
+
+        completeAnimatingIndicator();
+    }
+
+    /**
+     * Called when the indicator animation has completed.
+     */
+    private void completeAnimatingIndicator() {
+        mIndicatorOffset = 1.0f;
+        mIndicatorAnimating = false;
         invalidate();
     }
 
@@ -863,6 +970,15 @@ public abstract class MenuDrawer extends ViewGroup {
     }
 
     @Override
+    public void postOnAnimation(Runnable action) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            super.postOnAnimation(action);
+        } else {
+            postDelayed(action, ANIMATION_DELAY);
+        }
+    }
+
+    @Override
     protected boolean fitSystemWindows(Rect insets) {
         if (mDragMode == MENU_DRAG_WINDOW) {
             statusBarHeight = insets.top;
@@ -876,13 +992,75 @@ public abstract class MenuDrawer extends ViewGroup {
      *
      * @return Returns a Parcelable containing the drawer state.
      */
-    public abstract Parcelable saveState();
+    public final Parcelable saveState() {
+        if (mState == null) mState = new Bundle();
+        saveState(mState);
+        return mState;
+    }
+
+    void saveState(Bundle state) {
+        // State saving isn't required for subclasses.
+    }
 
     /**
      * Restores the state of the drawer.
      *
      * @param in A parcelable containing the drawer state.
      */
-    public abstract void restoreState(Parcelable in);
+    public void restoreState(Parcelable in) {
+        mState = (Bundle) in;
+    }
 
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        Parcelable superState = super.onSaveInstanceState();
+        SavedState state = new SavedState(superState);
+
+        if (mState == null) mState = new Bundle();
+        saveState(mState);
+
+        state.mState = mState;
+        return state;
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        SavedState savedState = (SavedState) state;
+        super.onRestoreInstanceState(savedState.getSuperState());
+
+        restoreState(savedState.mState);
+    }
+
+    static class SavedState extends BaseSavedState {
+
+        Bundle mState;
+
+        public SavedState(Parcelable superState) {
+            super(superState);
+        }
+
+        public SavedState(Parcel in) {
+            super(in);
+            mState = in.readBundle();
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            super.writeToParcel(dest, flags);
+            dest.writeBundle(mState);
+        }
+
+        @SuppressWarnings("UnusedDeclaration")
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
+            @Override
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
+    }
 }

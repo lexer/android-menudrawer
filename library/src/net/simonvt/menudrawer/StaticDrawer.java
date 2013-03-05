@@ -3,17 +3,14 @@ package net.simonvt.menudrawer;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.os.Parcelable;
 import android.util.AttributeSet;
 
 public abstract class StaticDrawer extends MenuDrawer {
 
-    private Position mPosition;
+    protected Position mPosition;
 
-    StaticDrawer(Activity activity, int dragMode, Position position) {
+    StaticDrawer(Activity activity, int dragMode) {
         super(activity, dragMode);
-
-        mPosition = position;
     }
 
     public StaticDrawer(Context context) {
@@ -62,64 +59,7 @@ public abstract class StaticDrawer extends MenuDrawer {
         mDropShadowDrawable.draw(canvas);
     }
 
-    private void drawIndicator(Canvas canvas) {
-        if (mActiveView != null && mActiveView.getParent() != null) {
-            Integer position = (Integer) mActiveView.getTag(R.id.mdActiveViewPosition);
-            final int pos = position == null ? 0 : position;
-
-            if (pos == mActivePosition) {
-                final int width = getWidth();
-                final int height = getHeight();
-                final int indicatorWidth = mActiveIndicator.getWidth();
-                final int indicatorHeight = mActiveIndicator.getHeight();
-
-                mActiveView.getDrawingRect(mActiveRect);
-                offsetDescendantRectToMyCoords(mActiveView, mActiveRect);
-
-                canvas.save();
-
-                switch (mPosition) {
-                    case LEFT: {
-                        final int top = mActiveRect.top + ((mActiveRect.height() - indicatorHeight) / 2);
-                        final int right = mMenuSize;
-                        final int left = right - indicatorWidth;
-                        canvas.clipRect(left, top, right, height);
-                        canvas.drawBitmap(mActiveIndicator, left, top, null);
-                        break;
-                    }
-
-                    case TOP: {
-                        final int bottom = mMenuSize;
-                        final int top = bottom - indicatorHeight;
-                        final int left = mActiveRect.left + ((mActiveRect.width() - indicatorWidth) / 2);
-                        canvas.clipRect(left, top, width, bottom);
-                        canvas.drawBitmap(mActiveIndicator, left, top, null);
-                        break;
-                    }
-
-                    case RIGHT: {
-                        final int top = mActiveRect.top + ((mActiveRect.height() - indicatorHeight) / 2);
-                        final int left = width - mMenuSize;
-                        final int right = left + indicatorWidth;
-                        canvas.clipRect(left, top, right, height);
-                        canvas.drawBitmap(mActiveIndicator, left, top, null);
-                        break;
-                    }
-
-                    case BOTTOM: {
-                        final int top = height - mMenuSize;
-                        final int bottom = top + indicatorHeight;
-                        final int left = mActiveRect.left + ((mActiveRect.width() - indicatorWidth) / 2);
-                        canvas.clipRect(left, top, width, bottom);
-                        canvas.drawBitmap(mActiveIndicator, left, top, null);
-                        break;
-                    }
-                }
-
-                canvas.restore();
-            }
-        }
-    }
+    protected abstract void drawIndicator(Canvas canvas);
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -275,12 +215,5 @@ public abstract class StaticDrawer extends MenuDrawer {
         return 0;
     }
 
-    @Override
-    public Parcelable saveState() {
-        return null;
-    }
 
-    @Override
-    public void restoreState(Parcelable in) {
-    }
 }

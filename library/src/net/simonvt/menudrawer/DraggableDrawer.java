@@ -3,9 +3,7 @@ package net.simonvt.menudrawer;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -31,16 +29,6 @@ public abstract class DraggableDrawer extends MenuDrawer {
      * Interpolator used for peeking at the drawer.
      */
     private static final Interpolator PEEK_INTERPOLATOR = new PeekInterpolator();
-
-    /**
-     * Interpolator used when animating the drawer open/closed.
-     */
-    private static final Interpolator SMOOTH_INTERPOLATOR = new SmoothInterpolator();
-
-    /**
-     * The time between each frame when animating the drawer.
-     */
-    protected static final int ANIMATION_DELAY = 1000 / 60;
 
     /**
      * The maximum alpha of the dark menu overlay used for dimming the menu.
@@ -196,7 +184,7 @@ public abstract class DraggableDrawer extends MenuDrawer {
         mTouchSlop = configuration.getScaledTouchSlop();
         mMaxVelocity = configuration.getScaledMaximumFlingVelocity();
 
-        mScroller = new Scroller(context, DraggableDrawer.SMOOTH_INTERPOLATOR);
+        mScroller = new Scroller(context, MenuDrawer.SMOOTH_INTERPOLATOR);
         mPeekScroller = new Scroller(context, DraggableDrawer.PEEK_INTERPOLATOR);
 
         mCloseEnough = dpToPx(DraggableDrawer.CLOSE_ENOUGH);
@@ -523,15 +511,6 @@ public abstract class DraggableDrawer extends MenuDrawer {
         stopLayerTranslation();
     }
 
-    @Override
-    public void postOnAnimation(Runnable action) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            super.postOnAnimation(action);
-        } else {
-            postDelayed(action, ANIMATION_DELAY);
-        }
-    }
-
     protected boolean isCloseEnough() {
         return Math.abs(mOffsetPixels) <= mCloseEnough;
     }
@@ -609,69 +588,20 @@ public abstract class DraggableDrawer extends MenuDrawer {
      */
     protected abstract void drawIndicator(Canvas canvas, int offsetPixels);
 
-    public Parcelable saveState() {
-        Bundle state = new Bundle();
+    void saveState(Bundle state) {
         final boolean menuVisible = mDrawerState == STATE_OPEN || mDrawerState == STATE_OPENING;
         state.putBoolean(STATE_MENU_VISIBLE, menuVisible);
-        return state;
     }
 
     public void restoreState(Parcelable in) {
+        super.restoreState(in);
         Bundle state = (Bundle) in;
         final boolean menuOpen = state.getBoolean(STATE_MENU_VISIBLE);
-        setOffsetPixels(menuOpen ? mMenuSize : 0);
+        if (menuOpen) {
+            openMenu(false);
+        } else {
+            setOffsetPixels(0);
+        }
         mDrawerState = menuOpen ? STATE_OPEN : STATE_CLOSED;
-    }
-
-    @Override
-    protected Parcelable onSaveInstanceState() {
-        Parcelable superState = super.onSaveInstanceState();
-
-        SavedState state = new SavedState(superState);
-        state.mMenuVisible = mDrawerState == STATE_OPEN || mDrawerState == STATE_OPENING;
-
-        return state;
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Parcelable state) {
-        SavedState savedState = (SavedState) state;
-        super.onRestoreInstanceState(savedState.getSuperState());
-
-        setOffsetPixels(savedState.mMenuVisible ? mMenuSize : 0);
-        mDrawerState = savedState.mMenuVisible ? STATE_OPEN : STATE_CLOSED;
-    }
-
-    static class SavedState extends BaseSavedState {
-
-        boolean mMenuVisible;
-
-        public SavedState(Parcelable superState) {
-            super(superState);
-        }
-
-        public SavedState(Parcel in) {
-            super(in);
-            mMenuVisible = in.readInt() == 1;
-        }
-
-        @Override
-        public void writeToParcel(Parcel dest, int flags) {
-            super.writeToParcel(dest, flags);
-            dest.writeInt(mMenuVisible ? 1 : 0);
-        }
-
-        @SuppressWarnings("UnusedDeclaration")
-        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
-            @Override
-            public SavedState createFromParcel(Parcel in) {
-                return new SavedState(in);
-            }
-
-            @Override
-            public SavedState[] newArray(int size) {
-                return new SavedState[size];
-            }
-        };
     }
 }
